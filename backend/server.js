@@ -1,3 +1,4 @@
+
 require("dotenv").config();
 
 const express = require("express");
@@ -20,12 +21,21 @@ app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 
+// Health checks
+app.get("/", (req, res) => {
+    res.status(200).send("HostelHub API is running!");
+});
+
+app.get("/healthz", (req, res) => {
+    res.status(200).json({ status: "ok" });
+});
+
 app.get("/api", (req, res) => {
     res.json({ message: "HostelHub API is running!" });
 });
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(`HostelHub running at http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`HostelHub running on port ${PORT}`);
 });
