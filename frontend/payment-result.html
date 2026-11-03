@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Result | HostelHub</title>
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-container {
+            background: white;
+            width: 90%;
+            max-width: 450px;
+            padding: 35px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .result-icon {
+            font-size: 55px;
+            margin-bottom: 15px;
+        }
+
+        h2 {
+            color: #172554;
+        }
+
+        #payment-message {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .home-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 25px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="result-container">
+        <div class="result-icon" id="result-icon">⏳</div>
+
+        <h2 id="result-title">Checking Your Payment</h2>
+
+        <p id="payment-message">
+            Please wait while we verify your payment with Pesapal.
+        </p>
+
+        <a href="dashboard.html" class="home-button">
+            Return to Dashboard
+        </a>
+    </div>
+
+    <script src="js/payment-result.js"></script>
+
+</body>
+</html>

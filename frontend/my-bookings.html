@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings | HostelHub</title>
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .bookings-container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .booking-card {
+            background: white;
+            padding: 22px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        .booking-card h3 {
+            margin-top: 0;
+        }
+
+        .booking-card p {
+            margin: 9px 0;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .booking-actions {
+            margin-top: 18px;
+        }
+
+        .pay-button {
+            background: #087443;
+            color: white;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .pay-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .empty-bookings {
+            background: white;
+            padding: 35px;
+            text-align: center;
+            border-radius: 10px;
+        }
+
+        .payment-message {
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <nav class="navbar">
+        <h2>Hostel<span>Hub</span></h2>
+
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="hostels.html">Hostels</a>
+            <a href="my-bookings.html">My Bookings</a>
+            <button class="btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+</header>
+
+<main class="bookings-container">
+
+    <h1>My Bookings</h1>
+    <p>View your reservations and manage your payments.</p>
+
+    <div id="my-bookings">
+        Loading your bookings...
+    </div>
+
+</main>
+
+<footer>
+    <h3>HostelHub</h3>
+    <p>Find your space. Book your stay.</p>
+    <p>© 2026 HostelHub. All rights reserved.</p>
+</footer>
+
+<script>
+    const token = localStorage.getItem("hostelhub_token");
+
+    if (!token) {
+        window.location.replace("login.html");
+    }
+
+    function logout() {
+        localStorage.removeItem("hostelhub_token");
+        localStorage.removeItem("hostelhub_user");
+        window.location.replace("login.html");
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[char]);
+    }
+
+    async function loadBookings() {
+        const container = document.getElementById("my-bookings");
+
+        try {
+            const response = await fetch("/api/users/bookings", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Unable to load your bookings.");
+            }
+
+            const bookings = await response.json();
+
+            if (!Array.isArray(bookings)) {
+                throw new Error("Invalid bookings response from server.");
+            }
+
+            if (bookings.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-bookings">
+                        <h3>No bookings yet</h3>
+                        <p>You have not booked any hostel.</p>
+                        <a href="hostels.html" class="btn">Explore Hostels</a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = bookings.map(booking => {
+                const paymentStatus = booking.payment_status || "Unpaid";
+                const bookingStatus = booking.status || "Pending";
+
+                let paymentAction = "";
+
+                if (bookingStatus === "Rejected") {
+                    paymentAction = `
+                        <p class="payment-message">
+                            This booking was rejected. Payment is unavailable.
+                        </p>
+                    `;
+                } else if (paymentStatus === "Paid") {
+                    paymentAction = `
+                        <p class="payment-message">
+                            Payment completed successfully. Your booking is confirmed.
+                        </p>
+                    `;
+                } else if (paymentStatus === "Pending") {
+                    paymentAction = `
+                        <p class="payment-message">
+                            Your payment is being processed. Please wait for confirmation.
+                        </p>
+                    `;
+                } else {
+                    paymentAction = `
+                        <button class="pay-button"
+                            onclick="makePayment(${Number(booking.id)}, this)">
+                            ${paymentStatus === "Failed" ? "Retry Payment" : "Pay Now"}
+                        </button>
+                    `;
+                }
+
+                return `
+                    <div class="booking-card">
+                        <h3>${escapeHTML(booking.hostel_name)}</h3>
+
+                        <p><strong>Booking Reference:</strong> #${escapeHTML(booking.id)}</p>
+                        <p><strong>Location:</strong> ${escapeHTML(booking.location)}</p>
+                        <p><strong>Price:</strong> KSh ${Number(booking.price).toLocaleString("en-KE")} / semester</p>
+                        <p><strong>Check-in:</strong> ${escapeHTML(booking.check_in)}</p>
+                        <p><strong>Check-out:</strong> ${escapeHTML(booking.check_out)}</p>
+                        <p><strong>Payment Method:</strong> ${escapeHTML(booking.payment_method)}</p>
+                        <p><strong>Booking Status:</strong> <span class="status">${escapeHTML(bookingStatus)}</span></p>
+                        <p><strong>Payment Status:</strong> <span class="status">${escapeHTML(paymentStatus)}</span></p>
+
+                        <div class="booking-actions">
+                            ${paymentAction}
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+        } catch (error) {
+            container.textContent = error.message;
+        }
+    }
+
+    async function makePayment(bookingId, button) {
+        button.disabled = true;
+        button.textContent = "Connecting to payment...";
+
+        try {
+            const response = await fetch(`/api/payments/checkout/${bookingId}`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || "Unable to start payment.");
+            }
+
+            if (!result.redirect_url) {
+                throw new Error("Payment link was not returned.");
+            }
+
+            window.location.href = result.redirect_url;
+
+        } catch (error) {
+            alert(error.message);
+            button.disabled = false;
+            button.textContent = "Pay Now";
+        }
+    }
+
+    loadBookings();
+</script>
+
+</body>
+</html>

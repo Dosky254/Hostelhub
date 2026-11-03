@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard | HostelHub</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+    <nav class="navbar">
+        <h2>Hostel<span>Hub</span> Admin</h2>
+        <button class="btn" onclick="logout()">Logout</button>
+    </nav>
+</header>
+
+<section class="hostels-section">
+    <h2>Admin Dashboard</h2>
+    <p>Manage HostelHub bookings and accommodation.</p>
+
+    <div id="statistics" class="hostel-grid"></div>
+
+    <h2 style="margin-top:40px">Add New Hostel</h2>
+
+    <form id="hostel-form" class="auth-card"
+          style="max-width:550px;margin:25px auto">
+        <input id="name" placeholder="Hostel name" required>
+        <input id="location" placeholder="Location" required>
+        <input id="price" type="number" min="1" placeholder="Monthly price (KSh)" required>
+        <input id="image" type="url" placeholder="Image URL">
+        <input id="rooms" type="number" min="0" placeholder="Available rooms" required>
+        <textarea id="description" placeholder="Hostel description"
+                  style="width:100%;padding:12px"></textarea>
+        <button class="btn" type="submit">Add Hostel</button>
+        <p id="hostel-message"></p>
+    </form>
+
+    <h2 style="margin-top:40px">All Bookings</h2>
+    <div id="admin-bookings"></div>
+
+    <h2 style="margin-top:40px">Manage Hostels</h2>
+    <div id="admin-hostels" class="hostel-grid"></div>
+</section>
+
+<script src="js/admin.js"></script>
+</body>
+</html>

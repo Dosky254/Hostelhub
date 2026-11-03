@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Available Hostels | HostelHub</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        body {
+            margin: 0;
+            background: #f5f7fa;
+            font-family: Arial, sans-serif;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+        }
+
+        .page-heading {
+            text-align: center;
+            padding: 45px 20px 25px;
+        }
+
+        .page-heading h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .hostels-container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .hostel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px;
+        }
+
+        .hostel-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+
+        .hostel-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .hostel-card img {
+            width: 100%;
+            height: 210px;
+            object-fit: cover;
+            display: block;
+            background: #e5e7eb;
+        }
+
+        .hostel-info {
+            padding: 20px;
+        }
+
+        .hostel-info h3 {
+            margin: 0 0 12px;
+            font-size: 20px;
+        }
+
+        .hostel-info p {
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .hostel-price {
+            font-size: 20px;
+            font-weight: bold;
+            color: #087443;
+            margin: 15px 0;
+        }
+
+        .room-count {
+            color: #087443 !important;
+            font-weight: bold;
+        }
+
+        .book-button {
+            display: block;
+            text-align: center;
+            background: #087443;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .book-button:hover {
+            background: #055c34;
+        }
+
+        #loading-message {
+            text-align: center;
+            padding: 30px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <nav class="navbar">
+        <h2>Hostel<span>Hub</span></h2>
+
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="hostels.html">Hostels</a>
+            <a href="my-bookings.html">My Bookings</a>
+            <button class="btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+</header>
+
+<section class="page-heading">
+    <h1>Find Your Perfect Hostel</h1>
+    <p>Explore comfortable and affordable student accommodation.</p>
+</section>
+
+<main class="hostels-container">
+    <div id="loading-message">Loading available hostels...</div>
+
+    <div id="hostel-list" class="hostel-grid"></div>
+</main>
+
+<footer>
+    <h3>HostelHub</h3>
+    <p>Find your space. Book your stay.</p>
+    <p>© 2026 HostelHub. All rights reserved.</p>
+</footer>
+
+<script>
+    const token = localStorage.getItem("hostelhub_token");
+
+    if (!token) {
+        window.location.replace("login.html");
+    }
+
+    function logout() {
+        localStorage.removeItem("hostelhub_token");
+        localStorage.removeItem("hostelhub_user");
+        window.location.replace("login.html");
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[char]);
+    }
+
+    async function loadHostels() {
+        const hostelList = document.getElementById("hostel-list");
+        const loading = document.getElementById("loading-message");
+
+        try {
+            const response = await fetch("/api/hostels");
+
+            if (!response.ok) {
+                throw new Error("Unable to load hostels.");
+            }
+
+            const hostels = await response.json();
+
+            loading.style.display = "none";
+
+            if (!hostels.length) {
+                loading.textContent = "No hostels available.";
+                loading.style.display = "block";
+                return;
+            }
+
+            hostelList.innerHTML = hostels.map(hostel => {
+                const image = hostel.image
+                    ? escapeHTML(hostel.image)
+                    : "https://images.unsplash.com/photo-1555854877-bab0e564b8d5";
+
+                const imageUrl = image +
+                    (image.includes("?") ? "&" : "?") +
+                    "auto=format&fit=crop&w=900&q=80";
+
+                return `
+                    <div class="hostel-card">
+
+                        <img
+                            src="${imageUrl}"
+                            alt="${escapeHTML(hostel.name)}"
+                            loading="lazy"
+                            onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=900&q=80';"
+                        >
+
+                        <div class="hostel-info">
+                            <h3>${escapeHTML(hostel.name)}</h3>
+
+                            <p>📍 ${escapeHTML(hostel.location)}</p>
+
+                            <p>${escapeHTML(hostel.description)}</p>
+
+                            <div class="hostel-price">
+                                KSh ${Number(hostel.price).toLocaleString("en-KE")}
+                                <small>/ semester</small>
+                            </div>
+
+                            <p class="room-count">
+                                ${escapeHTML(hostel.available_rooms)} rooms available
+                            </p>
+
+                            <a
+                                href="booking.html?hostel_id=${encodeURIComponent(hostel.id)}"
+                                class="book-button">
+                                Book Now
+                            </a>
+                        </div>
+
+                    </div>
+                `;
+            }).join("");
+
+        } catch (error) {
+            loading.textContent = error.message;
+            console.error(error);
+        }
+    }
+
+    loadHostels();
+</script>
+
+</body>
+</html>
