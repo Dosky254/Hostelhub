@@ -171,6 +171,10 @@ router.post("/checkout/:bookingId", authenticate, async (req, res) => {
                                     );
 
                                     const paymentData = response.data;
+                                    console.log(
+    "PESAPAL CHECKOUT RESPONSE:",
+    JSON.stringify(paymentData, null, 2)
+);
 
                                     if (
                                         !paymentData.redirect_url ||
